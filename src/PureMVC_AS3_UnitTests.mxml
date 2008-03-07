@@ -14,7 +14,7 @@
 			
 			import flexunit.framework.TestSuite;
 			
-			private function onCreationComplete():void
+			public function onCreationComplete():void
 			{
  				testRunner.test = createSuite();
  				testRunner.startTest();
