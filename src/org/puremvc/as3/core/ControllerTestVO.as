@@ -20,7 +20,7 @@ package org.puremvc.as3.core
 		public function ControllerTestVO (input:Number){
 			this.input = input;
 		}
-		public var input:Number;
-		public var result:Number;
+		public var input:Number = 0;
+		public var result:Number = 0;
 	}
 }

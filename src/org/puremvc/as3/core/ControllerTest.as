@@ -37,6 +37,7 @@ package org.puremvc.as3.core
    			ts.addTest( new ControllerTest( "testRegisterAndExecuteCommand" ) );
    			ts.addTest( new ControllerTest( "testRegisterAndRemoveCommand" ) );
    			ts.addTest( new ControllerTest( "testHasCommand" ) );
+   			ts.addTest( new ControllerTest( "testReregisterAndExecuteCommand" ) );
    			
    			return ts;
    		}
@@ -147,6 +148,44 @@ package org.puremvc.as3.core
 			
    			// test that hasCommand returns false for hasCommandTest notifications 
    			assertTrue( "Expecting controller.hasCommand('hasCommandTest') == false", controller.hasCommand('hasCommandTest') == false );
+   			
+   		}
+   		
+ 		/**
+  		 * Tests Removing and Reregistering a Command
+  		 * 
+  		 * <P>
+  		 * Tests that when a Command is re-registered 
+  		 * that it isn't fired twice. This bug was fixed in AS3 Standard Version 2.0.2.</P>
+  		 */
+  		public function testReregisterAndExecuteCommand():void {
+  			
+   			// Fetch the controller, register the ControllerTestCommand2 to handle 'ControllerTest2' notes
+   			var controller:IController = Controller.getInstance();
+   			controller.registerCommand('ControllerTest2', org.puremvc.as3.core.ControllerTestCommand2);
+   			
+   			// Remove the Command from the Controller
+   			controller.removeCommand('ControllerTest2');
+			
+   			// Re-register the Command with the Controller
+   			controller.registerCommand('ControllerTest2', org.puremvc.as3.core.ControllerTestCommand2);
+
+   			// Create a 'ControllerTest2' note
+   			var vo:Object = new ControllerTestVO( 12 );
+   			var note:Notification = new Notification( 'ControllerTest2', vo );
+
+			// Tell the controller to execute the Command associated with the note.
+   			controller.executeCommand(note);
+   			
+   			// test assertions 
+			// if the command is executed once the value will be 24
+			assertTrue( "Expecting vo.result == 24", vo.result == 24 );
+
+   			// Prove that accumulation work in the VO
+   			controller.executeCommand(note); 
+   			
+			// if the command is executed twice the value will be 48
+			assertTrue( "Expecting vo.result == 48", vo.result == 48 );
    			
    		}
    		
