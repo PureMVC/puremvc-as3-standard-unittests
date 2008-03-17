@@ -115,8 +115,7 @@ if (!isEclipse() || window.name != ECLIPSE_FRAME_NAME) {titleBar_setSubTitle("Cl
      Tests Removing and Reregistering a Command
      
      <P>
-     Tests that when a Command is re-registered 
-     that it isn't fired twice.</div>
+     Tests that when a Command is re-registered that it isn't fired twice.</div>
 </td><td class="summaryTableOwnerCol">ControllerTest</td>
 </tr>
 </table>
@@ -233,8 +232,13 @@ showHideInherited();
      Tests Removing and Reregistering a Command
      
      <P>
-     Tests that when a Command is re-registered 
-     that it isn't fired twice. This bug was fixed in AS3 Standard Version 2.0.2.</P>
+     Tests that when a Command is re-registered that it isn't fired twice.
+     This involves, minimally, registration with the controller but
+     notification via the View, rather than direct execution of
+     the Controller's executeCommand method as is done above in 
+     testRegisterAndRemove. The bug under test was fixed in AS3 Standard 
+     Version 2.0.2. If you run the unit tests with 2.0.1 this
+     test will fail.</P>
      </p></div>
 <br>
 <br>
