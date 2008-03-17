@@ -5,10 +5,10 @@
 package org.puremvc.as3.core
 {
 	import flexunit.framework.TestCase;
- 	import flexunit.framework.TestSuite;
- 	
- 	import org.puremvc.as3.interfaces.*;
- 	import org.puremvc.as3.patterns.observer.*;
+	import flexunit.framework.TestSuite;
+	
+	import org.puremvc.as3.interfaces.*;
+	import org.puremvc.as3.patterns.observer.*;
  	
 	/**
 	 * Test the PureMVC Controller class.
@@ -155,11 +155,16 @@ package org.puremvc.as3.core
   		 * Tests Removing and Reregistering a Command
   		 * 
   		 * <P>
-  		 * Tests that when a Command is re-registered 
-  		 * that it isn't fired twice. This bug was fixed in AS3 Standard Version 2.0.2.</P>
+  		 * Tests that when a Command is re-registered that it isn't fired twice.
+  		 * This involves, minimally, registration with the controller but
+  		 * notification via the View, rather than direct execution of
+  		 * the Controller's executeCommand method as is done above in 
+  		 * testRegisterAndRemove. The bug under test was fixed in AS3 Standard 
+  		 * Version 2.0.2. If you run the unit tests with 2.0.1 this
+  		 * test will fail.</P>
   		 */
   		public function testReregisterAndExecuteCommand():void {
-  			
+  			 
    			// Fetch the controller, register the ControllerTestCommand2 to handle 'ControllerTest2' notes
    			var controller:IController = Controller.getInstance();
    			controller.registerCommand('ControllerTest2', org.puremvc.as3.core.ControllerTestCommand2);
@@ -174,15 +179,18 @@ package org.puremvc.as3.core
    			var vo:Object = new ControllerTestVO( 12 );
    			var note:Notification = new Notification( 'ControllerTest2', vo );
 
-			// Tell the controller to execute the Command associated with the note.
-   			controller.executeCommand(note);
+			// retrieve a reference to the View.
+   			var view:IView = View.getInstance();
+   			
+			// send the Notification
+   			view.notifyObservers(note);
    			
    			// test assertions 
 			// if the command is executed once the value will be 24
 			assertTrue( "Expecting vo.result == 24", vo.result == 24 );
 
-   			// Prove that accumulation work in the VO
-   			controller.executeCommand(note); 
+   			// Prove that accumulation works in the VO by sending the notification again
+   			view.notifyObservers(note);
    			
 			// if the command is executed twice the value will be 48
 			assertTrue( "Expecting vo.result == 48", vo.result == 48 );
