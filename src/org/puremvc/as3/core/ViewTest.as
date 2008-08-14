@@ -5,11 +5,11 @@
 package org.puremvc.as3.core
 {
 	import flexunit.framework.TestCase;
- 	import flexunit.framework.TestSuite;
- 	
- 	import org.puremvc.as3.interfaces.*;
- 	import org.puremvc.as3.patterns.observer.*;
- 	import org.puremvc.as3.patterns.mediator.Mediator;
+	import flexunit.framework.TestSuite;
+	
+	import org.puremvc.as3.interfaces.*;
+	import org.puremvc.as3.patterns.mediator.Mediator;
+	import org.puremvc.as3.patterns.observer.*;
  	
   	/**
 	 * Test the PureMVC View class.
@@ -19,10 +19,14 @@ package org.puremvc.as3.core
   		public var lastNotification:String;	
   		public var onRegisterCalled:Boolean = false;
   		public var onRemoveCalled:Boolean = false;
+  		public var counter:Number = 0;
   		
  		public static const NOTE1:String = "Notification1";
 		public static const NOTE2:String = "Notification2";
 		public static const NOTE3:String = "Notification3";
+		public static const NOTE4:String = "Notification4";
+		public static const NOTE5:String = "Notification5";
+		public static const NOTE6:String = "Notification6";
  	
   		/**
   		 * Constructor.
@@ -49,8 +53,8 @@ package org.puremvc.as3.core
    			ts.addTest( new ViewTest( "testSuccessiveRegisterAndRemoveMediator" ) );
    			ts.addTest( new ViewTest( "testRemoveMediatorAndSubsequentNotify" ) );
    			ts.addTest( new ViewTest( "testRemoveOneOfTwoMediatorsAndSubsequentNotify" ) );
-   			
-   			
+   			ts.addTest( new ViewTest( "testMediatorReregistration" ) );
+   			ts.addTest( new ViewTest( "testModifyObserverListDuringNotification" ) );
    			return ts;
    		}
   		
@@ -232,8 +236,6 @@ package org.puremvc.as3.core
 		}
 		
 		
-		
-		
 		/**
 		 * Tests successive regster and remove of same mediator.
 		 */
@@ -376,6 +378,92 @@ package org.puremvc.as3.core
 
 			cleanup();						  			
 		}
+		
+		/**
+		 * Tests registering the same mediator twice. 
+		 * A subsequent notification should only illicit
+		 * one response. Also, since reregistration
+		 * was causing 2 observers to be created, ensure
+		 * that after removal of the mediator there will
+		 * be no further response.
+		 * 
+		 * Added for the fix deployed in version 2.0.4
+		 */
+		public function testMediatorReregistration():void {
+			
+  			// Get the Singleton View instance
+  			var view:IView = View.getInstance();
+			
+			// Create and register that responds to notification 5
+			view.registerMediator( new ViewTestMediator5( this ) );
+			
+			// try to register another instance of that mediator (uses the same NAME constant).
+			view.registerMediator( new ViewTestMediator5( this ) );
+			
+			// test that the counter is only incremented once (mediator 5's response) 
+			counter=0;
+   			view.notifyObservers( new Notification(NOTE5) );
+   			assertEquals( "Expecting counter == 1",  1, counter);
+
+			// Remove the Mediator 
+			view.removeMediator( ViewTestMediator5.NAME );
+
+			// test that retrieving it now returns null			
+   			assertTrue( "Expecting view.retrieveMediator( ViewTestMediator5.NAME ) == null", 
+   			view.retrieveMediator( ViewTestMediator5.NAME ) == null );
+
+			// test that the counter is no longer incremented  
+			counter=0;
+   			view.notifyObservers( new Notification(NOTE5) );
+   			assertEquals( "Expecting counter == 0", 0,  counter);
+		}
+		
+		
+		/**
+		 * Tests the ability for the observer list to 
+		 * be modified during the process of notification,
+		 * and all observers be properly notified. This
+		 * happens most often when multiple Mediators
+		 * respond to the same notification by removing
+		 * themselves.  
+		 * 
+		 * Added for the fix deployed in version 2.0.4
+		 */
+		public function testModifyObserverListDuringNotification():void {
+			
+  			// Get the Singleton View instance
+  			var view:IView = View.getInstance();
+			
+			// Create and register several mediator instances that respond to notification 6 
+			// by removing themselves, which will cause the observer list for that notification 
+			// to change. versions prior to Standard Version 2.0.4 will see every other mediator
+			// fails to be notified.  
+			view.registerMediator( new ViewTestMediator6(  ViewTestMediator6+"/1", this ) );
+			view.registerMediator( new ViewTestMediator6(  ViewTestMediator6+"/2", this ) );
+			view.registerMediator( new ViewTestMediator6(  ViewTestMediator6+"/3", this ) );
+			view.registerMediator( new ViewTestMediator6(  ViewTestMediator6+"/4", this ) );
+			view.registerMediator( new ViewTestMediator6(  ViewTestMediator6+"/5", this ) );
+			view.registerMediator( new ViewTestMediator6(  ViewTestMediator6+"/6", this ) );
+			view.registerMediator( new ViewTestMediator6(  ViewTestMediator6+"/7", this ) );
+			view.registerMediator( new ViewTestMediator6(  ViewTestMediator6+"/8", this ) );
+
+			// clear the counter
+			counter=0;
+			// send the notification. each of the above mediators will respond by removing
+			// themselves and incrementing the counter by 1. This should leave us with a
+			// count of 8, since 8 mediators will respond.
+			view.notifyObservers( new Notification( NOTE6 ) );
+			// verify the count is correct
+   			assertEquals( "Expecting counter == 8", 8, counter);
+	
+			// clear the counter
+			counter=0;
+			view.notifyObservers( new Notification( NOTE6 ) );
+			// verify the count is 0
+   			assertEquals( "Expecting counter == 0", 0, counter);
+
+		}
+		
 		
 		
 		private function cleanup():void
